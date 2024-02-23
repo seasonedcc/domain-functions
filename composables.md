@@ -25,7 +25,7 @@ This library also defines several operations besides the `pipe` to compose funct
 
 ## Creating primitive composables
 
-> here we will have a quick intro for the `Composable` and `Result<T>` types and how to call composables and check for results
+A `Composable` is a function that returns a `Promise<Result<T>>` where `T` is any type you want to return. Values of the type `Result` will represent either a failure (which carries a list of errors) or a success, where the computation has returned a value within the type `T`.
 
 ## Handling errors
 > Quick motivation for having Composables return an error over dealing with exceptions
