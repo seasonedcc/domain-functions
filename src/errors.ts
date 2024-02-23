@@ -3,7 +3,6 @@ import type {
   AtLeastOne,
   ErrorData,
   ErrorResult,
-  ErrorWithMessage,
   SchemaError,
 } from './types.ts'
 
@@ -98,10 +97,9 @@ class ResultError extends Error {
   }
 }
 
-function schemaErrorToErrorWithMessage(se: SchemaError): ErrorWithMessage {
-  return {
-    message: `${se.path.join('.')} ${se.message}`.trim(),
-  }
+function schemaErrorToError(se: SchemaError): Error {
+  const message = `${se.path.join('.')} ${se.message}`.trim()
+  return new Error(message)
 }
 function errorResultToFailure({
   errors,
@@ -112,8 +110,8 @@ function errorResultToFailure({
     success: false,
     errors: [
       ...errors,
-      ...inputErrors.map(schemaErrorToErrorWithMessage),
-      ...environmentErrors.map(schemaErrorToErrorWithMessage),
+      ...inputErrors.map(schemaErrorToError),
+      ...environmentErrors.map(schemaErrorToError),
     ],
   }
 }
@@ -123,17 +121,15 @@ function failureToErrorResult({ errors }: Failure): ErrorResult {
     success: false,
     errors: errors
       .filter(
-        ({ exception }) =>
+        (exception) =>
           !(
             exception instanceof InputError ||
             exception instanceof InputErrors ||
             exception instanceof EnvironmentError
           ),
       )
-      .flatMap((e) =>
-        e.exception instanceof ResultError ? e.exception.result.errors : e,
-      ),
-    inputErrors: errors.flatMap(({ exception }) =>
+      .flatMap((e) => (e instanceof ResultError ? e.result.errors : e)),
+    inputErrors: errors.flatMap((exception) =>
       exception instanceof InputError
         ? [
             {
@@ -150,7 +146,7 @@ function failureToErrorResult({ errors }: Failure): ErrorResult {
         ? exception.result.inputErrors
         : [],
     ),
-    environmentErrors: errors.flatMap(({ exception }) =>
+    environmentErrors: errors.flatMap((exception) =>
       exception instanceof EnvironmentError
         ? [
             {
@@ -175,4 +171,3 @@ export {
   ResultError,
   schemaError,
 }
-

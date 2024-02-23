@@ -1,6 +1,6 @@
 import { assertEquals, describe, it } from '../test-prelude.ts'
 import { map, mapError, pipe, sequence } from './index.ts'
-import type { Composable, ErrorWithMessage, Result } from './index.ts'
+import type { Composable, Result } from './index.ts'
 import { Equal, Expect } from './types.test.ts'
 import { all, collect, composable } from './composable.ts'
 
@@ -124,7 +124,7 @@ describe('pipe', () => {
     assertEquals(res.errors![0].message, 'always throw')
     assertEquals(
       // deno-lint-ignore no-explicit-any
-      (res.errors[0] as any).exception?.cause,
+      (res.errors[0] as any).cause,
       'it was made for this',
     )
   })
@@ -348,7 +348,8 @@ describe('map', () => {
   })
 })
 
-const cleanError = (err: ErrorWithMessage) => ({
+const cleanError = (err: Error) => ({
+  ...err,
   message: err.message + '!!!',
 })
 describe('mapError', () => {
@@ -382,4 +383,3 @@ describe('mapError', () => {
     assertEquals(res.errors![0].message, 'Mapper also has problems')
   })
 })
-

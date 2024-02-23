@@ -1,10 +1,11 @@
-import { describe, it, assertEquals } from './test-prelude.ts'
+import { assertEquals, describe, it } from './test-prelude.ts'
 import { z } from './test-prelude.ts'
 
 import { mdf } from './constructor.ts'
 import { mapError } from './domain-functions.ts'
 import type { DomainFunction, ErrorData } from './types.ts'
 import type { Equal, Expect } from './types.test.ts'
+import { assertObjectMatch } from 'https://deno.land/std@0.206.0/assert/assert_object_match.ts'
 
 describe('mapError', () => {
   it('returns the result when the domain function suceeds', async () => {
@@ -13,7 +14,7 @@ describe('mapError', () => {
       ({
         errors: [{ message: 'New Error Message' }],
         inputErrors: [{ message: 'New Input Error Message' }],
-      } as ErrorData)
+      }) as ErrorData
 
     const c = mapError(a, b)
     type _R = Expect<Equal<typeof c, DomainFunction<number>>>
@@ -28,10 +29,11 @@ describe('mapError', () => {
   })
 
   it('returns a domain function function that will apply a function over the error of the first one', async () => {
+    const exception = new Error('Number of errors: 0')
     const a = mdf(z.object({ id: z.number() }))(({ id }) => id + 1)
     const b = (result: ErrorData) =>
       ({
-        errors: [{ message: 'Number of errors: ' + result.errors.length }],
+        errors: [exception],
         environmentErrors: [],
         inputErrors: [
           {
@@ -39,14 +41,14 @@ describe('mapError', () => {
             path: [],
           },
         ],
-      } as ErrorData)
+      }) as ErrorData
 
     const c = mapError(a, b)
     type _R = Expect<Equal<typeof c, DomainFunction<number>>>
 
     assertEquals(await c({ invalidInput: '1' }), {
       success: false,
-      errors: [{ message: 'Number of errors: 0' }],
+      errors: [exception],
       environmentErrors: [],
       inputErrors: [{ message: 'Number of input errors: 1', path: [] }],
     })
@@ -61,9 +63,9 @@ describe('mapError', () => {
     const c = mapError(a, b)
     type _R = Expect<Equal<typeof c, DomainFunction<number>>>
 
-    assertEquals(await c({ invalidInput: '1' }), {
+    assertObjectMatch(await c({ invalidInput: '1' }), {
       success: false,
-      errors: [{ message: 'failed to map', exception: 'failed to map' }],
+      errors: [{ message: 'failed to map' }],
       inputErrors: [],
       environmentErrors: [],
     })
